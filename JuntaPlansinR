@@ -1,0 +1,76 @@
+
+library(dplyr)
+library(readxl)
+library(rlang)
+library (vctrs)
+require(dplyr)
+require(esquisse)
+library(ggplot2)
+library(ggplot2)
+library(plotly)
+library(e1071)
+require(Hmisc)
+require(devtools)
+
+setwd("C:\\Users\\vandersond\\Desktop\\Materia R\\Docs\\")
+#Junta arquivos 
+diretorio="C:\\Users\\vandersond\\Desktop\\Materia R\\Docs\\"
+
+datasets <- readxl_example(files)
+
+#LISTA OS ARQUIVOS
+files <- list.files(path=diretorio, pattern="*.xlsx")
+
+#MOSTRA O NOME DOS ARQUIVOS
+print(files) 
+#CRIA UM DATAFRAME VAZIO
+consolidado_junta_arquivos=data.frame()   
+
+#JUNTA OS ARQUIVOS em consolidado_junta_arquivos
+for (i in 1:(length(files))) {
+  
+  cat("--------------------------------------------\n")
+  cat("--------CARREGANDO:",files[i],"---------------\n")
+  cat("--------------------------------------------")
+  
+  dados <- read_excel(files[i],sheet=1)
+  print(dim(dados)[1])
+  consolidado_junta_arquivos= union_all(consolidado_junta_arquivos,dados)
+  
+  
+} 
+
+
+
+#informa 1 para quantidade de linhas(empresas)
+consolidado_junta_arquivos$QUANT_EMP=1
+
+#informa 1 para a linha que tem protocolo preenchido.
+consolidado_junta_arquivos = consolidado_junta_arquivos %>%
+  mutate(QUANT_PROTO = case_when(
+   PROTOCOLO != "" ~ '1'
+  ))
+
+
+#converte para numerico
+consolidado_junta_arquivos$QUANT_PROTO = as.numeric(consolidado_junta_arquivos$QUANT_PROTO)
+
+teste = consolidado_junta_arquivos %>%
+  select(SUPERVISOR,DATA,QUANT_EMP,QUANT_PROTO) %>%
+  group_by(SUPERVISOR,DATA)%>%
+  summarise(totalempresa = sum(QUANT_EMP,na.rm = T),protocolos = sum(QUANT_PROTO,na.rm = T))
+write.table(teste,'teste.csv',sep=';',append = FALSE,row.names=F)
+
+View(teste)
+#esquisser(viewer = "browser")
+
+
+
+ggplot(teste,aes(x=SUPERVISOR,y=protocolos))+
+  geom_bar(stat="identity")+
+  theme_classic()+theme_light()+
+  theme(axis.text.x = element_text(angle = 75, vjust = .5)) 
+
+
+
+  
